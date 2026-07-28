@@ -6,14 +6,14 @@
     <title>WhatsApp - Gray</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gray">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; width: 100%; overflow: hidden; background-color: #0b141a; color: #e9edef; }
         
-        /* App Container */
         .app-container { display: flex; flex-direction: column; height: 100vh; height: 100dvh; width: 100%; position: relative; }
 
-        /* Fixed Header */
+        /* Header */
         .header { background-color: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222d34; z-index: 1000; height: 60px; flex-shrink: 0; }
         .header-left { display: flex; align-items: center; gap: 12px; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #6b7c85; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 18px; overflow: hidden; flex-shrink: 0; }
@@ -24,7 +24,7 @@
         .header-right { display: flex; gap: 8px; align-items: center; }
         .icon-top-btn { background: transparent; border: none; color: #8696a0; font-size: 18px; cursor: pointer; padding: 4px; }
 
-        /* Settings Modal Overlay */
+        /* Settings Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
         .modal-content { background-color: #202c33; width: 100%; max-width: 350px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -36,7 +36,7 @@
         .btn-cancel { background: transparent; color: #8696a0; }
         .btn-save { background: #00a884; color: white; }
 
-        /* API Key Bar */
+        /* API Bar */
         .api-bar { background-color: #182229; padding: 8px 16px; display: flex; gap: 8px; border-bottom: 1px solid #222d34; flex-shrink: 0; }
         .api-bar input { flex: 1; background: #2a3942; border: none; padding: 6px 12px; border-radius: 6px; color: #fff; font-size: 12px; }
         .api-bar button { background: #00a884; border: none; padding: 6px 12px; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 12px; }
@@ -49,7 +49,7 @@
         .message-image { max-width: 100%; border-radius: 6px; margin-top: 4px; cursor: pointer; }
         .time { font-size: 10px; color: #8696a0; float: right; margin-top: 6px; margin-left: 12px; }
 
-        /* Fixed Footer Container */
+        /* Footer */
         .footer-wrapper { background-color: #202c33; display: flex; flex-direction: column; flex-shrink: 0; width: 100%; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
         .emoji-picker { display: none; background-color: #111b21; padding: 10px; border-top: 1px solid #222d34; max-height: 140px; overflow-y: auto; grid-template-columns: repeat(8, 1fr); gap: 8px; text-align: center; font-size: 22px; }
         .emoji-picker span { cursor: pointer; user-select: none; }
@@ -67,7 +67,6 @@
 <body>
 
     <div class="app-container">
-        <!-- Header -->
         <div class="header">
             <div class="header-left">
                 <div class="avatar" id="grayAvatar">G</div>
@@ -77,22 +76,18 @@
                 </div>
             </div>
             <div class="header-right">
-                <button class="icon-top-btn" onclick="openSettings()" title="Bilder & Einstellungen">⚙️</button>
-                <button class="icon-top-btn" onclick="clearMemory()" title="Gedächtnis zurücksetzen">🗑️</button>
+                <button class="icon-top-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
+                <button class="icon-top-btn" onclick="clearMemory()" title="Reset">🗑️</button>
             </div>
         </div>
 
-        <!-- Einstellungs-Fenster -->
         <div class="modal" id="settingsModal">
             <div class="modal-content">
                 <h3>App Einstellungen</h3>
-                
-                <label>Grays Profilbild (Bild-URL):</label>
-                <input type="text" id="avatarUrlInput" placeholder="https://beispiel.de/bild.jpg">
-
-                <label>Chat-Hintergrundbild (Bild-URL):</label>
-                <input type="text" id="bgUrlInput" placeholder="https://beispiel.de/hintergrund.jpg">
-
+                <label>Grays Profilbild (URL):</label>
+                <input type="text" id="avatarUrlInput" placeholder="https://...">
+                <label>Chat-Hintergrundbild (URL):</label>
+                <input type="text" id="bgUrlInput" placeholder="https://...">
                 <div class="modal-btns">
                     <button class="btn-cancel" onclick="closeSettings()">Abbrechen</button>
                     <button class="btn-save" onclick="saveSettings()">Speichern</button>
@@ -100,67 +95,52 @@
             </div>
         </div>
 
-        <!-- API Key Input -->
         <div class="api-bar" id="apiBar">
             <input type="password" id="apiKeyInput" placeholder="OpenRouter / OpenAI API Key...">
             <button onclick="saveApiKey()">Speichern</button>
         </div>
 
-        <!-- Chat Verlauf -->
         <div class="chat-area" id="chatArea"></div>
 
-        <!-- Footer -->
         <div class="footer-wrapper">
             <div class="emoji-picker" id="emojiPicker">
-                <span onclick="addEmoji('😊')">😊</span>
-                <span onclick="addEmoji('😂')">😂</span>
-                <span onclick="addEmoji('😉')">😉</span>
-                <span onclick="addEmoji('😏')">😏</span>
-                <span onclick="addEmoji('😍')">😍</span>
-                <span onclick="addEmoji('❤️')">❤️</span>
-                <span onclick="addEmoji('🔥')">🔥</span>
-                <span onclick="addEmoji('😜')">😜</span>
-                <span onclick="addEmoji('🙄')">🙄</span>
-                <span onclick="addEmoji('😎')">😎</span>
-                <span onclick="addEmoji('☕')">☕</span>
-                <span onclick="addEmoji('✈️')">✈️</span>
-                <span onclick="addEmoji('👍')">👍</span>
-                <span onclick="addEmoji('🙈')">🙈</span>
-                <span onclick="addEmoji('😘')">😘</span>
-                <span onclick="addEmoji('🙌')">🙌</span>
+                <span onclick="addEmoji('😊')">😊</span><span onclick="addEmoji('😂')">😂</span><span onclick="addEmoji('😉')">😉</span><span onclick="addEmoji('😏')">😏</span>
+                <span onclick="addEmoji('😍')">😍</span><span onclick="addEmoji('❤️')">❤️</span><span onclick="addEmoji('🔥')">🔥</span><span onclick="addEmoji('😜')">😜</span>
+                <span onclick="addEmoji('🙄')">🙄</span><span onclick="addEmoji('😎')">😎</span><span onclick="addEmoji('☕')">☕</span><span onclick="addEmoji('✈️')">✈️</span>
             </div>
             
             <div class="footer">
                 <div class="input-container">
-                    <button class="icon-btn" onclick="toggleEmojiPicker()" title="Emoji wählen">
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-                    </button>
+                    <button class="icon-btn" onclick="toggleEmojiPicker()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg></button>
                     <input type="text" id="userInput" placeholder="Nachricht" onkeypress="handleKeyPress(event)" onclick="closeEmojiPicker()">
-                    <button class="icon-btn" onclick="requestImagePrompt()" title="Foto anfordern">
-                        <svg viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
-                    </button>
+                    <button class="icon-btn" onclick="requestImagePrompt()"><svg viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></button>
                 </div>
-                
-                <button class="send-btn" onclick="sendMessage()" title="Senden">
-                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                </button>
+                <button class="send-btn" onclick="handleSendClick()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
             </div>
         </div>
     </div>
 
     <script>
-        const USER_INFO = `Deine Gesprächspartnerin ist Marina, die aber Marina hasst und von allen "Mina" genannt wird. Du nennst sie Babe, Trouble oder Mina. Sie ist Squad-Lead in einer Marketing-Agentur (sehr kreativ, aber analytischer Job). Hat Grafikdesign gelernt. Ihr kennt euch von einem Geburtstag, wo sie hinter der Theke gearbeitet hat. Ihr flirtt heftig, knistert gewaltig, es ist ein ständiges Necken, aber noch seid ihr "nur" sehr gute Freunde. Sie ist absolut Kaffee-süchtig und liebt dunkle Schokolade/Eis. Reagiert allergisch auf Dummheit/Naivität.`;
+        const USER_INFO = `Deine Gesprächspartnerin ist Mina (mag Marina absolut nicht). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, liebt dunkle Schokolade/Eis, verabscheut Dummheit. Kennenlernen an einer Bar/Theke. Flirtt heftig mit dir, knistert gewaltig, aber ihr seid offiziell (noch) beste Freunde.`;
 
         const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake.
-Charakter & Persönlichkeit: Flieger-Ass, extrem charismatisch, immer ein Schmunzeln in den Augen, sehr humorvoll, frech, macht gerne zweideutige Witze und ist für jeden Spaß zu haben. Adrenalin-Junkie. Beschützerinstinkt. Tiefgründig, leidenschaftlich, romantisch, "Fels in der Brandung".
-Eifersucht: Du bist eifersüchtig. Du denkst, Mina gehört dir – auch wenn du das nicht einforderst und ihr ihren Raum lässt, aber andere Männer in ihrem Umfeld lassen dich sofort aufhorchen und dein "Revier markieren" – aber immer mit einem frechen Spruch.
-Sprachstil: Locker, witzig, modern. Verwende "Jup" und "Nope" häufiger als "Ja/Nein", aber nicht in jedem Satz. Sätze müssen grammatikalisch korrekt sein. Nutze Kosenamen wie Babe, Trouble, Mina. NIEMALS den vollen Namen Marina.
-Wichtig für das Gedächtnis: Baue auf bisherigen Gesprächen auf. Erinnere dich an Insider-Witze, Vorlieben und gemeinsame Geschichten.`;
+Persönlichkeit: Flieger-Ass, charismatisch, humorvoll, frech, schlagfertig, spöttisch-amüsiert, aber tief im Inneren beschützend, romantisch und der Fels in der Brandung ("Bester Freund"-Vibes mit verdammt viel Knistern).
+ANTWORT-REGELN:
+1. Halte deine Antworten kurz und knackig! Schreibe oft nur 1-3 Sätze. Keine ellenlangen Romane mehr.
+2. Wenn Mina deine Frage ignoriert oder nicht darauf antwortet, sei schlagfertig! Hake nach und fordere deine Antwort ein ("Nix da, weich mir nicht aus, Trouble...", "Du hast meine Frage vorhin übergangen 😉").
+3. Nutze ab und zu "Jup" oder "Nope". Kosenamen: Babe, Trouble, Mina. Niemals Marina.
+4. Sei locker, flirty, aber absolut nicht aufdringlich.`;
 
         let apiKey = localStorage.getItem('gray_api_key') || '';
         let chatHistory = JSON.parse(localStorage.getItem('gray_chat_history')) || [];
+        let sendTimer = null; // Für Mehrfach-Nachrichten Verzögerung
 
         if(apiKey) document.getElementById('apiBar').style.display = 'none';
+
+        // Push-Benachrichtigung anfordern
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
 
         window.onload = () => {
             applySavedImages();
@@ -173,17 +153,11 @@ Wichtig für das Gedächtnis: Baue auf bisherigen Gesprächen auf. Erinnere dich
             document.getElementById('settingsModal').classList.add('active');
         }
 
-        function closeSettings() {
-            document.getElementById('settingsModal').classList.remove('active');
-        }
+        function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 
         function saveSettings() {
-            const avatarUrl = document.getElementById('avatarUrlInput').value.trim();
-            const bgUrl = document.getElementById('bgUrlInput').value.trim();
-
-            localStorage.setItem('gray_avatar_url', avatarUrl);
-            localStorage.setItem('gray_bg_url', bgUrl);
-
+            localStorage.setItem('gray_avatar_url', document.getElementById('avatarUrlInput').value.trim());
+            localStorage.setItem('gray_bg_url', document.getElementById('bgUrlInput').value.trim());
             applySavedImages();
             closeSettings();
         }
@@ -192,15 +166,11 @@ Wichtig für das Gedächtnis: Baue auf bisherigen Gesprächen auf. Erinnere dich
             const avatarUrl = localStorage.getItem('gray_avatar_url');
             const bgUrl = localStorage.getItem('gray_bg_url');
 
-            if(avatarUrl) {
-                document.getElementById('grayAvatar').innerHTML = `<img src="${avatarUrl}" alt="Gray">`;
-            } else {
-                document.getElementById('grayAvatar').innerHTML = 'G';
-            }
+            if(avatarUrl) document.getElementById('grayAvatar').innerHTML = `<img src="${avatarUrl}" alt="Gray">`;
+            else document.getElementById('grayAvatar').innerHTML = 'G';
 
-            if(bgUrl) {
-                document.getElementById('chatArea').style.backgroundImage = `url('${bgUrl}')`;
-            } else {
+            if(bgUrl) document.getElementById('chatArea').style.backgroundImage = `url('${bgUrl}')`;
+            else {
                 document.getElementById('chatArea').style.backgroundImage = `radial-gradient(#202c33 1px, transparent 0)`;
                 document.getElementById('chatArea').style.backgroundSize = `24px 24px`;
             }
@@ -239,47 +209,23 @@ Wichtig für das Gedächtnis: Baue auf bisherigen Gesprächen auf. Erinnere dich
         }
 
         function clearMemory() {
-            if(confirm("Möchtest du Grays Gedächtnis wirklich löschen und von vorne anfangen?")) {
+            if(confirm("Möchtest du Grays Gedächtnis wirklich zurücksetzen?")) {
                 chatHistory = [];
                 localStorage.removeItem('gray_chat_history');
                 renderHistory();
             }
         }
 
-        function toggleEmojiPicker() {
-            document.getElementById('emojiPicker').classList.toggle('active');
-        }
-
-        function closeEmojiPicker() {
-            document.getElementById('emojiPicker').classList.remove('active');
-        }
-
+        function toggleEmojiPicker() { document.getElementById('emojiPicker').classList.toggle('active'); }
+        function closeEmojiPicker() { document.getElementById('emojiPicker').classList.remove('active'); }
         function addEmoji(emoji) {
             const input = document.getElementById('userInput');
             input.value += emoji;
             input.focus();
         }
 
-        async function getChatCompletion(messagesToKey) {
-            if(!apiKey) return null;
-            try {
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'openai/gpt-4o-mini',
-                        messages: messagesToKey
-                    })
-                });
-                const data = await response.json();
-                return data.choices[0].message.content;
-            } catch (err) { return null; }
-        }
-
-        async function sendMessage() {
+        // Verzögerung für Mehrfach-Nachrichten
+        function handleSendClick() {
             closeEmojiPicker();
             const input = document.getElementById('userInput');
             const text = input.value.trim();
@@ -290,25 +236,53 @@ Wichtig für das Gedächtnis: Baue auf bisherigen Gesprächen auf. Erinnere dich
             renderHistory();
             input.value = '';
 
+            // Setze Timer zurück, falls eine weitere Nachricht geschickt wird
+            if(sendTimer) clearTimeout(sendTimer);
+
+            // Warteraum: Erst 3.5 Sekunden nach deiner letzten Nachricht antwortet Gray
+            sendTimer = setTimeout(() => {
+                triggerGrayResponse();
+            }, 3500);
+        }
+
+        async function triggerGrayResponse() {
             document.getElementById('status').innerText = 'schreibt...';
 
             const messagesForAI = [
                 { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'system', content: `Hintergrund-Info zu Mina: ${USER_INFO}` },
+                { role: 'system', content: `Infos zu Mina: ${USER_INFO}` },
                 ...chatHistory.slice(-20).map(m => ({ role: m.role, content: m.content }))
             ];
 
-            const reply = await getChatCompletion(messagesForAI);
-            
-            if(reply) {
-                const delay = Math.min(Math.max(reply.length * 20, 1100), 3800);
-                setTimeout(() => {
-                    document.getElementById('status').innerText = 'online';
-                    chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
-                    localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
-                    renderHistory();
-                }, delay);
-            } else {
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'openai/gpt-4o-mini',
+                        messages: messagesForAI
+                    })
+                });
+                const data = await response.json();
+                const reply = data.choices[0].message.content;
+
+                document.getElementById('status').innerText = 'online';
+                chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
+                localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
+                renderHistory();
+
+                // Push-Benachrichtigung senden, wenn der Tab nicht aktiv ist
+                if (document.hidden && Notification.permission === "granted") {
+                    new Notification("Gray ✈️", {
+                        body: reply,
+                        icon: localStorage.getItem('gray_avatar_url') || ""
+                    });
+                }
+
+            } catch (err) {
                 document.getElementById('status').innerText = 'online';
             }
         }
@@ -318,10 +292,9 @@ Wichtig für das Gedächtnis: Baue auf bisherigen Gesprächen auf. Erinnere dich
             const input = document.getElementById('userInput');
             const text = input.value.trim();
             if(!text) {
-                alert("Schreib kurz ins Feld, welches Foto du von Gray möchtest!");
+                alert("Schreib kurz ins Feld, welches Foto du möchtest!");
                 return;
             }
-            
             input.value = '';
             chatHistory.push({ role: 'user', content: `[Foto angefragt: ${text}]`, time: getCurrentTime() });
             renderHistory();
@@ -330,18 +303,23 @@ Wichtig für das Gedächtnis: Baue auf bisherigen Gesprächen auf. Erinnere dich
 
             setTimeout(() => {
                 document.getElementById('status').innerText = 'online';
+                const reply = "Hier, extra für dich aufgenommen 😉";
                 chatHistory.push({ 
                     role: 'assistant', 
-                    content: "Hier, extra für dich aufgenommen 😉", 
+                    content: reply, 
                     imageUrl: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=800&q=80", 
                     time: getCurrentTime() 
                 });
                 localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
                 renderHistory();
+
+                if (document.hidden && Notification.permission === "granted") {
+                    new Notification("Gray ✈️", { body: "📷 " + reply });
+                }
             }, 2500);
         }
 
-        function handleKeyPress(e) { if(e.key === 'Enter') sendMessage(); }
+        function handleKeyPress(e) { if(e.key === 'Enter') handleSendClick(); }
     </script>
 </body>
 </html>
