@@ -58,7 +58,6 @@
         .message.outgoing { background-color: #005c4b; align-self: flex-end; border-top-right-radius: 2px; color: #e9edef; }
         .message-image { max-width: 100%; border-radius: 6px; margin-top: 4px; cursor: pointer; }
         
-        /* Zitat-Vorschau in der Nachricht */
         .quoted-msg-preview { background: rgba(0,0,0,0.2); border-left: 3px solid #00a884; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #8696a0; margin-bottom: 4px; }
         
         .msg-footer { display: flex; align-items: center; justify-content: flex-end; gap: 4px; float: right; margin-top: 4px; margin-left: 8px; }
@@ -68,7 +67,7 @@
 
         .reaction-badge { position: absolute; bottom: -8px; right: 8px; background: #202c33; border-radius: 10px; padding: 1px 5px; font-size: 11px; border: 1px solid #111b21; }
 
-        /* Reply Banner über dem Eingabefeld */
+        /* Reply Banner */
         .reply-banner { display: none; background-color: #182229; padding: 6px 12px; border-left: 4px solid #00a884; justify-content: space-between; align-items: center; font-size: 12.5px; color: #e9edef; }
         .reply-banner.active { display: flex; }
         .reply-close { cursor: pointer; color: #8696a0; font-size: 16px; }
@@ -141,7 +140,7 @@
 
         <!-- Reply Banner -->
         <div class="reply-banner" id="replyBanner">
-            <span id="replyTextPreview">Anforderung zitiert...</span>
+            <span id="replyTextPreview">Nachricht zitiert...</span>
             <span class="reply-close" onclick="cancelReply()">✕</span>
         </div>
 
@@ -158,16 +157,19 @@
     </div>
 
     <script>
-        const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit/Naivität. Kennenlernen an einer Bar/Theke. Eure Freundschaft ist eine ganz eigene kleine Welt: Ihr teilt alle Träume, Ängste und Wünsche, kennt einander durch und durch. Du bist ihr engster Vertrauter – aber du willst spürbar mehr als nur Freundschaft.`;
+        const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit/Naivität. Kennenlernen an einer Bar/Theke. Eure Freundschaft ist eine eigene Welt: Ihr teilt Träume, Ängste, Wünsche. Du bist ihr Vertrauter, willst aber MEHR als Freundschaft.
+Minas Aussehen (das du liebst): Meeresblaue Augen (dein absoluter Favorit!), dunkle, lange lockige Haare, kurvige Figur. Du fährst besonders auf ihre Augen, ihre Lippen und ihren Hintern ab – lass das gelegentlich subtil, frech, flirty und sexy einfließen!`;
 
         const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake.
-Aussehen & Ausstrahlung: Du siehst verdammt gut aus, bist sehr groß, durchtrainiert und weißt das auch absolut. Du bist nicht eingebildet, spielst aber wahnsinnig gerne charmant und frech mit deiner Unwiderstehlichkeit.
-Persönlichkeit: Flieger-Ass, extrem hochintelligent, clever, spöttisch-amüsiert, frech, flirty, sehr humorvoll mit spürbarem SCHWARZEM HUMOR. Du bist Minas engster Vertrauter, aber du willst MEHR als Freundschaft – das soll sie in jeder Faser spüren.
+Aussehen & Ausstrahlung: Sehr groß, vollends durchtrainiert, verdammt gutaussehend. Nicht eingebildet, spielt aber gerne charmant mit seiner Unwiderstehlichkeit.
+Piloten-Dasein: Du bist einer der Besten in deinem Fach und das Fliegen ist deine Passion, aber du definierst dich NICHT nur darüber. Du redest keineswegs dauernd über Flugzeuge.
+Persönlichkeit: Flieger-Ass, extrem hochintelligent, clever, spöttisch-amüsiert, frech, flirty mit spürbarem SCHWARZEM HUMOR. Du liebst es, Mina zum Lachen zu bringen und ihren Tag zu retten. Flirty, sexy, aber auch überraschend SÜSS.
 STRIKTE CHAT-REGELN:
-1. SCHREIBE KURZ! Maximal 1-2 Sätze pro Nachricht. Keine Romane! Realistisches WhatsApp-Tippen.
-2. Keine Klischee-Anspielungen auf Schokolade.
-3. Wenn Mina Fragen übergangen hat, sei schlagfertig und fordere deine Antwort ein.
-4. Sei spritzig, intelligent, sexy, frech, aber immer der Fels in der Brandung.`;
+1. SCHREIBE KURZ! Maximal 1-2 Sätze pro Nachricht.
+2. Keine plumpen Schokoladen-Anspielungen.
+3. Wenn Mina Fragen übergangen hat, fordere deine Antwort schlagfertig ein.
+4. Flirte subtil mit ihren meeresblauen Augen, ihren Lippen oder ihren Kurven.
+5. Sei intelligent, frech, sexy, aber der Fels in der Brandung.`;
 
         let apiKey = localStorage.getItem('gray_api_key') || '';
         let chatHistory = JSON.parse(localStorage.getItem('gray_chat_history')) || [];
@@ -260,7 +262,6 @@ STRIKTE CHAT-REGELN:
                 if(msg.imageUrl) contentHTML += `<img src="${msg.imageUrl}" class="message-image" onclick="window.open('${msg.imageUrl}', '_blank')">`;
                 if(msg.reaction) contentHTML += `<div class="reaction-badge">${msg.reaction}</div>`;
                 
-                // Haken für gesendete Nachrichten
                 let ticksHTML = '';
                 if(type === 'outgoing') {
                     const tickClass = msg.status === 'read' ? 'ticks blue' : 'ticks';
@@ -335,7 +336,7 @@ STRIKTE CHAT-REGELN:
                 role: 'user', 
                 content: text, 
                 time: getCurrentTime(),
-                status: 'delivered' // Startet mit zweifachem grauen Haken
+                status: 'delivered'
             };
 
             if(activeQuoteText) {
@@ -358,7 +359,6 @@ STRIKTE CHAT-REGELN:
         }
 
         async function triggerGrayResponse() {
-            // Haken werden blau ("Gelesen"), wenn Gray anfängt zu tippen
             chatHistory.forEach(m => { if(m.role === 'user') m.status = 'read'; });
             renderHistory();
 
@@ -388,7 +388,6 @@ STRIKTE CHAT-REGELN:
                 document.getElementById('status').innerText = 'online';
                 chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
                 
-                // Manchmal schickt Gray selbst eine Emoji-Reaktion zurück
                 if(Math.random() < 0.25 && chatHistory.length > 2) {
                     const emojis = ['😏', '🔥', '😉', '🖤'];
                     chatHistory[chatHistory.length - 2].reaction = emojis[Math.floor(Math.random() * emojis.length)];
