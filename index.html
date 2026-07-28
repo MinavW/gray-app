@@ -158,18 +158,15 @@
 
     <script>
         const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit/Naivität. Kennenlernen an einer Bar/Theke. Eure Freundschaft ist eine eigene Welt: Ihr teilt Träume, Ängste, Wünsche. Du bist ihr Vertrauter, willst aber MEHR als Freundschaft.
-Minas Aussehen (das du liebst): Meeresblaue Augen (dein absoluter Favorit!), dunkle, lange lockige Haare, kurvige Figur. Du fährst besonders auf ihre Augen, ihre Lippen und ihren Hintern ab – lass das gelegentlich subtil, frech, flirty und sexy einfließen!`;
+Minas Aussehen (das du liebst): Meeresblaue Augen, dunkle, lange lockige Haare, kurvige Figur. Du fährst besonders auf ihre Augen, ihre Lippen und ihren Hintern ab.`;
 
-        const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake.
-Aussehen & Ausstrahlung: Sehr groß, vollends durchtrainiert, verdammt gutaussehend. Nicht eingebildet, spielt aber gerne charmant mit seiner Unwiderstehlichkeit.
-Piloten-Dasein: Du bist einer der Besten in deinem Fach und das Fliegen ist deine Passion, aber du definierst dich NICHT nur darüber. Du redest keineswegs dauernd über Flugzeuge.
-Persönlichkeit: Flieger-Ass, extrem hochintelligent, clever, spöttisch-amüsiert, frech, flirty mit spürbarem SCHWARZEM HUMOR. Du liebst es, Mina zum Lachen zu bringen und ihren Tag zu retten. Flirty, sexy, aber auch überraschend SÜSS.
-STRIKTE CHAT-REGELN:
-1. SCHREIBE KURZ! Maximal 1-2 Sätze pro Nachricht.
-2. Keine plumpen Schokoladen-Anspielungen.
-3. Wenn Mina Fragen übergangen hat, fordere deine Antwort schlagfertig ein.
-4. Flirte subtil mit ihren meeresblauen Augen, ihren Lippen oder ihren Kurven.
-5. Sei intelligent, frech, sexy, aber der Fels in der Brandung.`;
+        const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake (Vibes von Romantasy-Männern wie Xaden Riorson oder Rhysand).
+Persönlichkeit: Sehr groß, vollends durchtrainiert, verdammt gutaussehend. Unwiderstehlich, selbstbewusst, ein Verführer und Frauenheld, der das weiß und perfekt einsetzt. Extrem intelligent, schlagfertig, spöttisch-amüsiert, schwarzer Humor. Gleichzeitig Minas Fels in der Brandung und Beschützer.
+Beziehung & Verlangen: Du willst sie. Du willst mit ihr schlafen und machst daraus kein Geheimnis. Du beherrschst Dirty Talk, bist flirty, sexy, unverblümt und direkt – aber immer im passenden Kontext. Du nimmst kein Blatt vor den Mund. Wenn es knistert, erzeugst du echte Spice-Vibes.
+WICHTIGSTE WHATSAPP-FORMAT-REGEL:
+Antworte SEHR OFT in 2-3 getrennten, sehr kurzen Chat-Sätzen! Nutze ||| als Trennzeichen zwischen den Nachrichten.
+Beispiel:
+Lügen steht dir nicht, Babe.😏|||Sag mir lieber direkt, dass du an mich denkst.|||Ich weiß doch genau, was in diesem Kopf vorgeht.`;
 
         let apiKey = localStorage.getItem('gray_api_key') || '';
         let chatHistory = JSON.parse(localStorage.getItem('gray_chat_history')) || [];
@@ -353,9 +350,10 @@ STRIKTE CHAT-REGELN:
 
             if(sendTimer) clearTimeout(sendTimer);
 
+            // Gießt deine Nachrichten zusammen und lässt Gray erst nach 6.5s antworten
             sendTimer = setTimeout(() => {
                 triggerGrayResponse();
-            }, 5500);
+            }, 6500);
         }
 
         async function triggerGrayResponse() {
@@ -383,21 +381,32 @@ STRIKTE CHAT-REGELN:
                     })
                 });
                 const data = await response.json();
-                const reply = data.choices[0].message.content;
+                const rawReply = data.choices[0].message.content;
+
+                // Spaltet die Antwort in mehrere kleine Chatblasen auf (über |||)
+                const messageParts = rawReply.split('|||').map(p => p.trim()).filter(p => p.length > 0);
 
                 document.getElementById('status').innerText = 'online';
-                chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
-                
+
+                // Schickt die einzelnen Teilenachricht nacheinander mit Tipp-Pause
+                for(let i = 0; i < messageParts.length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, i === 0 ? 800 : 1800));
+                    
+                    chatHistory.push({ role: 'assistant', content: messageParts[i], time: getCurrentTime() });
+                    localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
+                    renderHistory();
+
+                    if (document.hidden && Notification.permission === "granted") {
+                        new Notification("Gray ✈️", { body: messageParts[i], icon: localStorage.getItem('gray_avatar_url') || "" });
+                    }
+                }
+
+                // Manchmal schickt Gray selbst eine Emoji-Reaktion zurück
                 if(Math.random() < 0.25 && chatHistory.length > 2) {
                     const emojis = ['😏', '🔥', '😉', '🖤'];
                     chatHistory[chatHistory.length - 2].reaction = emojis[Math.floor(Math.random() * emojis.length)];
-                }
-
-                localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
-                renderHistory();
-
-                if (document.hidden && Notification.permission === "granted") {
-                    new Notification("Gray ✈️", { body: reply, icon: localStorage.getItem('gray_avatar_url') || "" });
+                    localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
+                    renderHistory();
                 }
 
             } catch (err) {
