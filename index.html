@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>WhatsApp - Gray</title>
-    <!-- Manifest direkt im Code eingebunden für App-Installation -->
-<link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Gray%22,%22short_name%22:%22Gray%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230b141a%22,%22theme_color%22:%22%23202c33%22}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Gray">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Gray%22,%22short_name%22:%22Gray%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230b141a%22,%22theme_color%22:%22%23202c33%22}">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; width: 100%; overflow: hidden; background-color: #0b141a; color: #e9edef; }
@@ -29,10 +28,10 @@
         /* Settings Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
-        .modal-content { background-color: #202c33; width: 100%; max-width: 350px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .modal-content { background-color: #202c33; width: 100%; max-width: 350px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
         .modal-content h3 { font-size: 16px; color: #e9edef; margin-bottom: 4px; }
-        .modal-content label { font-size: 12px; color: #8696a0; }
-        .modal-content input { background: #2a3942; border: none; padding: 10px; border-radius: 6px; color: #fff; font-size: 13px; outline: none; }
+        .modal-content label { font-size: 13px; color: #8696a0; font-weight: 500; }
+        .file-input-btn { background: #2a3942; border: 1px dashed #00a884; padding: 10px; border-radius: 8px; color: #e9edef; font-size: 13px; text-align: center; cursor: pointer; }
         .modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
         .modal-btns button { border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; }
         .btn-cancel { background: transparent; color: #8696a0; }
@@ -83,16 +82,21 @@
             </div>
         </div>
 
+        <!-- Einstellungs-Fenster mit Galerie-Upload -->
         <div class="modal" id="settingsModal">
             <div class="modal-content">
                 <h3>App Einstellungen</h3>
-                <label>Grays Profilbild (URL):</label>
-                <input type="text" id="avatarUrlInput" placeholder="https://...">
-                <label>Chat-Hintergrundbild (URL):</label>
-                <input type="text" id="bgUrlInput" placeholder="https://...">
+                
+                <label>Grays Profilbild:</label>
+                <label for="avatarFileInput" class="file-input-btn">📷 Bild aus Galerie auswählen</label>
+                <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 'gray_avatar_url')">
+
+                <label>Chat-Hintergrundbild:</label>
+                <label for="bgFileInput" class="file-input-btn">🖼️ Hintergrund aus Galerie wählen</label>
+                <input type="file" id="bgFileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event, 'gray_bg_url')">
+
                 <div class="modal-btns">
-                    <button class="btn-cancel" onclick="closeSettings()">Abbrechen</button>
-                    <button class="btn-save" onclick="saveSettings()">Speichern</button>
+                    <button class="btn-cancel" onclick="closeSettings()">Schließen</button>
                 </div>
             </div>
         </div>
@@ -135,11 +139,10 @@ ANTWORT-REGELN:
 
         let apiKey = localStorage.getItem('gray_api_key') || '';
         let chatHistory = JSON.parse(localStorage.getItem('gray_chat_history')) || [];
-        let sendTimer = null; // Für Mehrfach-Nachrichten Verzögerung
+        let sendTimer = null;
 
         if(apiKey) document.getElementById('apiBar').style.display = 'none';
 
-        // Push-Benachrichtigung anfordern
         if ("Notification" in window && Notification.permission !== "granted") {
             Notification.requestPermission();
         }
@@ -149,19 +152,42 @@ ANTWORT-REGELN:
             renderHistory();
         };
 
-        function openSettings() {
-            document.getElementById('avatarUrlInput').value = localStorage.getItem('gray_avatar_url') || '';
-            document.getElementById('bgUrlInput').value = localStorage.getItem('gray_bg_url') || '';
-            document.getElementById('settingsModal').classList.add('active');
-        }
-
+        function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
         function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 
-        function saveSettings() {
-            localStorage.setItem('gray_avatar_url', document.getElementById('avatarUrlInput').value.trim());
-            localStorage.setItem('gray_bg_url', document.getElementById('bgUrlInput').value.trim());
-            applySavedImages();
-            closeSettings();
+        // Galerie-Datei verarbeiten & komprimieren
+        function handleFileSelect(event, storageKey) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Bild leicht verkleinern, damit der Speicher nicht überläuft
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxDim = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxDim) { height *= maxDim / width; width = maxDim; }
+                    } else {
+                        if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    localStorage.setItem(storageKey, compressedBase64);
+                    applySavedImages();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         function applySavedImages() {
@@ -226,7 +252,6 @@ ANTWORT-REGELN:
             input.focus();
         }
 
-        // Verzögerung für Mehrfach-Nachrichten
         function handleSendClick() {
             closeEmojiPicker();
             const input = document.getElementById('userInput');
@@ -238,10 +263,8 @@ ANTWORT-REGELN:
             renderHistory();
             input.value = '';
 
-            // Setze Timer zurück, falls eine weitere Nachricht geschickt wird
             if(sendTimer) clearTimeout(sendTimer);
 
-            // Warteraum: Erst 3.5 Sekunden nach deiner letzten Nachricht antwortet Gray
             sendTimer = setTimeout(() => {
                 triggerGrayResponse();
             }, 3500);
@@ -276,7 +299,6 @@ ANTWORT-REGELN:
                 localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
                 renderHistory();
 
-                // Push-Benachrichtigung senden, wenn der Tab nicht aktiv ist
                 if (document.hidden && Notification.permission === "granted") {
                     new Notification("Gray ✈️", {
                         body: reply,
