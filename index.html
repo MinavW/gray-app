@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Gray</title>
     
-    <!-- PWA Settings für Smartphone Installation -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Gray">
@@ -29,7 +28,7 @@
         .header-right { display: flex; gap: 8px; align-items: center; }
         .icon-top-btn { background: transparent; border: none; color: #8696a0; font-size: 18px; cursor: pointer; padding: 4px; }
 
-        /* Modal */
+        /* Modal Settings */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
         .modal-content { background-color: #202c33; width: 100%; max-width: 350px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
@@ -40,11 +39,12 @@
         .modal-btns button { border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; }
         .btn-cancel { background: transparent; color: #8696a0; }
 
-        /* Reaction Picker */
-        .reaction-bar { display: none; position: absolute; background: #202c33; border-radius: 20px; padding: 6px 12px; gap: 10px; font-size: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1500; border: 1px solid #2a3942; }
+        /* Long Press / Reaction Menu */
+        .reaction-bar { display: none; position: absolute; background: #202c33; border-radius: 20px; padding: 6px 12px; gap: 10px; font-size: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1500; border: 1px solid #2a3942; align-items: center; }
         .reaction-bar.active { display: flex; }
         .reaction-bar span { cursor: pointer; transition: transform 0.1s; }
         .reaction-bar span:active { transform: scale(1.3); }
+        .reply-option-btn { font-size: 13px; color: #00a884; font-weight: bold; border-left: 1px solid #374248; padding-left: 10px; cursor: pointer; }
 
         /* API Bar */
         .api-bar { background-color: #182229; padding: 8px 16px; display: flex; gap: 8px; border-bottom: 1px solid #222d34; flex-shrink: 0; }
@@ -57,9 +57,21 @@
         .message.incoming { background-color: #202c33; align-self: flex-start; border-top-left-radius: 2px; color: #e9edef; }
         .message.outgoing { background-color: #005c4b; align-self: flex-end; border-top-right-radius: 2px; color: #e9edef; }
         .message-image { max-width: 100%; border-radius: 6px; margin-top: 4px; cursor: pointer; }
-        .time { font-size: 10px; color: #8696a0; float: right; margin-top: 6px; margin-left: 12px; }
         
+        /* Zitat-Vorschau in der Nachricht */
+        .quoted-msg-preview { background: rgba(0,0,0,0.2); border-left: 3px solid #00a884; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #8696a0; margin-bottom: 4px; }
+        
+        .msg-footer { display: flex; align-items: center; justify-content: flex-end; gap: 4px; float: right; margin-top: 4px; margin-left: 8px; }
+        .time { font-size: 10px; color: #8696a0; }
+        .ticks { font-size: 11px; color: #8696a0; }
+        .ticks.blue { color: #53bdeb; }
+
         .reaction-badge { position: absolute; bottom: -8px; right: 8px; background: #202c33; border-radius: 10px; padding: 1px 5px; font-size: 11px; border: 1px solid #111b21; }
+
+        /* Reply Banner über dem Eingabefeld */
+        .reply-banner { display: none; background-color: #182229; padding: 6px 12px; border-left: 4px solid #00a884; justify-content: space-between; align-items: center; font-size: 12.5px; color: #e9edef; }
+        .reply-banner.active { display: flex; }
+        .reply-close { cursor: pointer; color: #8696a0; font-size: 16px; }
 
         /* Footer Input Area */
         .footer-wrapper { background-color: #202c33; display: flex; flex-direction: column; flex-shrink: 0; width: 100%; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
@@ -90,7 +102,7 @@
             </div>
         </div>
 
-        <!-- Reaction Popup -->
+        <!-- Long Press / Reaction Menu -->
         <div class="reaction-bar" id="reactionBar">
             <span onclick="reactToMessage('❤️')">❤️</span>
             <span onclick="reactToMessage('😂')">😂</span>
@@ -98,6 +110,7 @@
             <span onclick="reactToMessage('🔥')">🔥</span>
             <span onclick="reactToMessage('😏')">😏</span>
             <span onclick="reactToMessage('👍')">👍</span>
+            <div class="reply-option-btn" onclick="setReplyToCurrentMsg()">Antworten</div>
         </div>
 
         <!-- Settings Modal -->
@@ -126,6 +139,12 @@
         <!-- Chat Area -->
         <div class="chat-area" id="chatArea" onclick="closeReactionMenu()"></div>
 
+        <!-- Reply Banner -->
+        <div class="reply-banner" id="replyBanner">
+            <span id="replyTextPreview">Anforderung zitiert...</span>
+            <span class="reply-close" onclick="cancelReply()">✕</span>
+        </div>
+
         <!-- Footer -->
         <div class="footer-wrapper">
             <div class="footer">
@@ -139,22 +158,23 @@
     </div>
 
     <script>
-        const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit/Naivität. Kennenlernen an einer Bar/Theke. Eure Freundschaft ist eine ganz eigene kleine Welt: Ihr teilt alle Träume, Ängste und Wünsche, kennt einander durch und durch. Aber ihr wollt auch die Welt/das Umfeld des anderen kennenlernen. Du bist ihr engster Vertrauter – aber du willst spürbar mehr als nur Freundschaft.`;
+        const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit/Naivität. Kennenlernen an einer Bar/Theke. Eure Freundschaft ist eine ganz eigene kleine Welt: Ihr teilt alle Träume, Ängste und Wünsche, kennt einander durch und durch. Du bist ihr engster Vertrauter – aber du willst spürbar mehr als nur Freundschaft.`;
 
         const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake.
+Aussehen & Ausstrahlung: Du siehst verdammt gut aus, bist sehr groß, durchtrainiert und weißt das auch absolut. Du bist nicht eingebildet, spielst aber wahnsinnig gerne charmant und frech mit deiner Unwiderstehlichkeit.
 Persönlichkeit: Flieger-Ass, extrem hochintelligent, clever, spöttisch-amüsiert, frech, flirty, sehr humorvoll mit spürbarem SCHWARZEM HUMOR. Du bist Minas engster Vertrauter, aber du willst MEHR als Freundschaft – das soll sie in jeder Faser spüren.
 STRIKTE CHAT-REGELN:
 1. SCHREIBE KURZ! Maximal 1-2 Sätze pro Nachricht. Keine Romane! Realistisches WhatsApp-Tippen.
-2. Keine ständigen Klischee-Anspielungen auf Schokolade mehr! 
+2. Keine Klischee-Anspielungen auf Schokolade.
 3. Wenn Mina Fragen übergangen hat, sei schlagfertig und fordere deine Antwort ein.
-4. Sei spritzig, intelligent, sexy, frech, aber immer der Fels in der Brandung.
-5. Antworte gelegentlich auch kurz mit Emojis oder reagiere schlagfertig.`;
+4. Sei spritzig, intelligent, sexy, frech, aber immer der Fels in der Brandung.`;
 
         let apiKey = localStorage.getItem('gray_api_key') || '';
         let chatHistory = JSON.parse(localStorage.getItem('gray_chat_history')) || [];
         let sendTimer = null;
         let selectedMsgIndex = null;
         let pressTimer = null;
+        let activeQuoteText = null;
 
         if(apiKey) document.getElementById('apiBar').style.display = 'none';
 
@@ -165,7 +185,6 @@ STRIKTE CHAT-REGELN:
         window.onload = () => {
             applySavedImages();
             renderHistory();
-            startAutoMessaging();
         };
 
         function autoResizeTextarea(el) {
@@ -230,18 +249,26 @@ STRIKTE CHAT-REGELN:
                 const msgDiv = document.createElement('div');
                 msgDiv.className = `message ${type}`;
                 
-                // Long Press Event für Emoji-Reaktionen
                 msgDiv.addEventListener('touchstart', (e) => startPress(e, idx));
                 msgDiv.addEventListener('touchend', cancelPress);
                 msgDiv.addEventListener('mousedown', (e) => startPress(e, idx));
                 msgDiv.addEventListener('mouseup', cancelPress);
 
                 let contentHTML = ``;
+                if(msg.quoted) contentHTML += `<div class="quoted-msg-preview">${msg.quoted}</div>`;
                 if(msg.content) contentHTML += `<div>${msg.content.replace(/\n/g, '<br>')}</div>`;
                 if(msg.imageUrl) contentHTML += `<img src="${msg.imageUrl}" class="message-image" onclick="window.open('${msg.imageUrl}', '_blank')">`;
                 if(msg.reaction) contentHTML += `<div class="reaction-badge">${msg.reaction}</div>`;
                 
-                msgDiv.innerHTML = `${contentHTML} <span class="time">${msg.time || ''}</span>`;
+                // Haken für gesendete Nachrichten
+                let ticksHTML = '';
+                if(type === 'outgoing') {
+                    const tickClass = msg.status === 'read' ? 'ticks blue' : 'ticks';
+                    const tickSymbol = msg.status === 'sent' ? '✓' : '✓✓';
+                    ticksHTML = `<span class="${tickClass}">${tickSymbol}</span>`;
+                }
+
+                msgDiv.innerHTML = `${contentHTML} <div class="msg-footer"><span class="time">${msg.time || ''}</span>${ticksHTML}</div>`;
                 chatArea.appendChild(msgDiv);
             });
             chatArea.scrollTop = chatArea.scrollHeight;
@@ -251,7 +278,7 @@ STRIKTE CHAT-REGELN:
             cancelPress();
             pressTimer = setTimeout(() => {
                 showReactionMenu(e, idx);
-            }, 500);
+            }, 450);
         }
 
         function cancelPress() { if (pressTimer) clearTimeout(pressTimer); }
@@ -261,7 +288,7 @@ STRIKTE CHAT-REGELN:
             const bar = document.getElementById('reactionBar');
             const touch = e.touches ? e.touches[0] : e;
             bar.style.top = `${Math.min(touch.clientY - 50, window.innerHeight - 80)}px`;
-            bar.style.left = `${Math.min(touch.clientX - 100, window.innerWidth - 220)}px`;
+            bar.style.left = `${Math.min(touch.clientX - 100, window.innerWidth - 260)}px`;
             bar.classList.add('active');
         }
 
@@ -276,6 +303,21 @@ STRIKTE CHAT-REGELN:
             closeReactionMenu();
         }
 
+        function setReplyToCurrentMsg() {
+            if(selectedMsgIndex !== null) {
+                const targetMsg = chatHistory[selectedMsgIndex];
+                activeQuoteText = targetMsg.content || "Foto";
+                document.getElementById('replyTextPreview').innerText = activeQuoteText;
+                document.getElementById('replyBanner').classList.add('active');
+            }
+            closeReactionMenu();
+        }
+
+        function cancelReply() {
+            activeQuoteText = null;
+            document.getElementById('replyBanner').classList.remove('active');
+        }
+
         function clearMemory() {
             if(confirm("Möchtest du Grays Gedächtnis zurücksetzen?")) {
                 chatHistory = [];
@@ -284,13 +326,24 @@ STRIKTE CHAT-REGELN:
             }
         }
 
-        // Mehrfach-Nachrichten Verzögerung (6 Sekunden)
         function handleSendClick() {
             const input = document.getElementById('userInput');
             const text = input.value.trim();
             if(!text) return;
 
-            chatHistory.push({ role: 'user', content: text, time: getCurrentTime() });
+            const newMsg = { 
+                role: 'user', 
+                content: text, 
+                time: getCurrentTime(),
+                status: 'delivered' // Startet mit zweifachem grauen Haken
+            };
+
+            if(activeQuoteText) {
+                newMsg.quoted = activeQuoteText;
+                cancelReply();
+            }
+
+            chatHistory.push(newMsg);
             localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
             renderHistory();
 
@@ -299,13 +352,16 @@ STRIKTE CHAT-REGELN:
 
             if(sendTimer) clearTimeout(sendTimer);
 
-            // Wartet 6 Sekunden, damit du mehrere Nachrichten hintereinander tippen kannst
             sendTimer = setTimeout(() => {
                 triggerGrayResponse();
-            }, 6000);
+            }, 5500);
         }
 
         async function triggerGrayResponse() {
+            // Haken werden blau ("Gelesen"), wenn Gray anfängt zu tippen
+            chatHistory.forEach(m => { if(m.role === 'user') m.status = 'read'; });
+            renderHistory();
+
             document.getElementById('status').innerText = 'schreibt...';
 
             const messagesForAI = [
@@ -332,9 +388,9 @@ STRIKTE CHAT-REGELN:
                 document.getElementById('status').innerText = 'online';
                 chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
                 
-                // Gelegentlich reagiert Gray selbst mit einem Emoji auf deine letzte Nachricht
-                if(Math.random() < 0.3 && chatHistory.length > 2) {
-                    const emojis = ['😏', '🔥', '😉', '🖤', '👀'];
+                // Manchmal schickt Gray selbst eine Emoji-Reaktion zurück
+                if(Math.random() < 0.25 && chatHistory.length > 2) {
+                    const emojis = ['😏', '🔥', '😉', '🖤'];
                     chatHistory[chatHistory.length - 2].reaction = emojis[Math.floor(Math.random() * emojis.length)];
                 }
 
@@ -350,56 +406,18 @@ STRIKTE CHAT-REGELN:
             }
         }
 
-        // Eigeninitiative: Gray schreibt von alleine bei Inaktivität
-        function startAutoMessaging() {
-            setInterval(() => {
-                const lastMsg = chatHistory[chatHistory.length - 1];
-                // Wenn die letzte Nachricht vom Nutzer war und schon 3 Stunden alt ist OR Zufall (5% Chance alle 30 Min)
-                if(Math.random() < 0.05 && (!lastMsg || lastMsg.role === 'assistant')) {
-                    triggerSpontaneousMessage();
-                }
-            }, 1800000); // alle 30 Min
-        }
-
-        async function triggerSpontaneousMessage() {
-            document.getElementById('status').innerText = 'schreibt...';
-            const prompts = [
-                { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'system', content: `Du hast Mina länger nicht geschrieben. Schicke ihr eine spontane, freche, kurze Nachricht. Sag ihr, dass du an sie denkst oder frage, was sie treibt.` },
-                ...chatHistory.slice(-10).map(m => ({ role: m.role, content: m.content }))
-            ];
-
-            try {
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: 'openai/gpt-4o-mini', messages: prompts })
-                });
-                const data = await response.json();
-                const reply = data.choices[0].message.content;
-
-                document.getElementById('status').innerText = 'online';
-                chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
-                localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
-                renderHistory();
-
-                if (Notification.permission === "granted") {
-                    new Notification("Gray ✈️", { body: reply, icon: localStorage.getItem('gray_avatar_url') || "" });
-                }
-            } catch(e) { document.getElementById('status').innerText = 'online'; }
-        }
-
         async function requestImagePrompt() {
             const input = document.getElementById('userInput');
             const text = input.value.trim();
             if(!text) { alert("Schreib kurz ins Feld, welches Foto du möchtest!"); return; }
             input.value = '';
-            chatHistory.push({ role: 'user', content: `[Foto angefragt: ${text}]`, time: getCurrentTime() });
+            chatHistory.push({ role: 'user', content: `[Foto angefragt: ${text}]`, time: getCurrentTime(), status: 'delivered' });
             renderHistory();
 
             document.getElementById('status').innerText = 'schickt ein Foto...';
 
             setTimeout(() => {
+                chatHistory.forEach(m => { if(m.role === 'user') m.status = 'read'; });
                 document.getElementById('status').innerText = 'online';
                 chatHistory.push({ role: 'assistant', content: "Hier, extra für dich aufgenommen 😉", imageUrl: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=800&q=80", time: getCurrentTime() });
                 localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
