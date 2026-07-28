@@ -8,8 +8,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0b141a; color: #e9edef; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        html, body { height: 100%; width: 100%; overflow: hidden; background-color: #0b141a; color: #e9edef; }
         
+        /* App Container */
+        .app-container { display: flex; flex-direction: column; height: 100vh; height: 100dvh; width: 100%; position: relative; }
+
         /* Fixed Header */
         .header { background-color: #202c33; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222d34; z-index: 1000; height: 60px; flex-shrink: 0; }
         .header-left { display: flex; align-items: center; gap: 12px; }
@@ -46,15 +49,16 @@
         .message-image { max-width: 100%; border-radius: 6px; margin-top: 4px; cursor: pointer; }
         .time { font-size: 10px; color: #8696a0; float: right; margin-top: 6px; margin-left: 12px; }
 
-        /* Footer */
-        .footer-wrapper { background-color: #202c33; display: flex; flex-direction: column; flex-shrink: 0; }
-        .emoji-picker { display: none; background-color: #111b21; padding: 10px; border-top: 1px solid #222d34; max-height: 150px; overflow-y: auto; grid-template-columns: repeat(8, 1fr); gap: 8px; text-align: center; font-size: 22px; }
+        /* Fixed Footer Container */
+        .footer-wrapper { background-color: #202c33; display: flex; flex-direction: column; flex-shrink: 0; width: 100%; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        .emoji-picker { display: none; background-color: #111b21; padding: 10px; border-top: 1px solid #222d34; max-height: 140px; overflow-y: auto; grid-template-columns: repeat(8, 1fr); gap: 8px; text-align: center; font-size: 22px; }
         .emoji-picker span { cursor: pointer; user-select: none; }
         .emoji-picker.active { display: grid; }
-        .footer { padding: 8px 10px; display: flex; gap: 8px; align-items: center; background-color: #202c33; }
-        .input-container { flex: 1; background-color: #2a3942; border-radius: 24px; display: flex; align-items: center; padding: 0 12px; }
-        .input-container input { flex: 1; background: transparent; border: none; padding: 10px 8px; color: #e9edef; font-size: 15px; outline: none; }
-        .icon-btn { background: transparent; border: none; color: #8696a0; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; }
+        
+        .footer { padding: 8px 10px; display: flex; gap: 8px; align-items: center; background-color: #202c33; min-height: 56px; }
+        .input-container { flex: 1; background-color: #2a3942; border-radius: 24px; display: flex; align-items: center; padding: 0 8px; }
+        .input-container input { flex: 1; background: transparent; border: none; padding: 10px 8px; color: #e9edef; font-size: 15px; outline: none; min-width: 0; }
+        .icon-btn { background: transparent; border: none; color: #8696a0; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; flex-shrink: 0; }
         .icon-btn svg { fill: #8696a0; width: 22px; height: 22px; }
         .send-btn { background-color: #00a884; border: none; width: 42px; height: 42px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .send-btn svg { fill: white; width: 20px; height: 20px; margin-left: 2px; }
@@ -62,83 +66,85 @@
 </head>
 <body>
 
-    <!-- Header -->
-    <div class="header">
-        <div class="header-left">
-            <div class="avatar" id="grayAvatar">G</div>
-            <div class="user-info">
-                <span class="name">Gray</span>
-                <span class="status" id="status">online</span>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="avatar" id="grayAvatar">G</div>
+                <div class="user-info">
+                    <span class="name">Gray</span>
+                    <span class="status" id="status">online</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="icon-top-btn" onclick="openSettings()" title="Bilder & Einstellungen">⚙️</button>
+                <button class="icon-top-btn" onclick="clearMemory()" title="Gedächtnis zurücksetzen">🗑️</button>
             </div>
         </div>
-        <div class="header-right">
-            <button class="icon-top-btn" onclick="openSettings()" title="Bilder & Einstellungen">⚙️</button>
-            <button class="icon-top-btn" onclick="clearMemory()" title="Gedächtnis zurücksetzen">🗑️</button>
-        </div>
-    </div>
 
-    <!-- Einstellungs-Fenster (Modal) -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <h3>App Einstellungen</h3>
-            
-            <label>Grays Profilbild (Bild-URL):</label>
-            <input type="text" id="avatarUrlInput" placeholder="https://beispiel.de/bild.jpg">
+        <!-- Einstellungs-Fenster -->
+        <div class="modal" id="settingsModal">
+            <div class="modal-content">
+                <h3>App Einstellungen</h3>
+                
+                <label>Grays Profilbild (Bild-URL):</label>
+                <input type="text" id="avatarUrlInput" placeholder="https://beispiel.de/bild.jpg">
 
-            <label>Chat-Hintergrundbild (Bild-URL):</label>
-            <input type="text" id="bgUrlInput" placeholder="https://beispiel.de/hintergrund.jpg">
+                <label>Chat-Hintergrundbild (Bild-URL):</label>
+                <input type="text" id="bgUrlInput" placeholder="https://beispiel.de/hintergrund.jpg">
 
-            <div class="modal-btns">
-                <button class="btn-cancel" onclick="closeSettings()">Abbrechen</button>
-                <button class="btn-save" onclick="saveSettings()">Speichern</button>
+                <div class="modal-btns">
+                    <button class="btn-cancel" onclick="closeSettings()">Abbrechen</button>
+                    <button class="btn-save" onclick="saveSettings()">Speichern</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- API Key Input -->
-    <div class="api-bar" id="apiBar">
-        <input type="password" id="apiKeyInput" placeholder="OpenRouter / OpenAI API Key...">
-        <button onclick="saveApiKey()">Speichern</button>
-    </div>
-
-    <!-- Chat Verlauf -->
-    <div class="chat-area" id="chatArea"></div>
-
-    <!-- Footer -->
-    <div class="footer-wrapper">
-        <div class="emoji-picker" id="emojiPicker">
-            <span onclick="addEmoji('😊')">😊</span>
-            <span onclick="addEmoji('😂')">😂</span>
-            <span onclick="addEmoji('😉')">😉</span>
-            <span onclick="addEmoji('😏')">😏</span>
-            <span onclick="addEmoji('😍')">😍</span>
-            <span onclick="addEmoji('❤️')">❤️</span>
-            <span onclick="addEmoji('🔥')">🔥</span>
-            <span onclick="addEmoji('😜')">😜</span>
-            <span onclick="addEmoji('🙄')">🙄</span>
-            <span onclick="addEmoji('😎')">😎</span>
-            <span onclick="addEmoji('☕')">☕</span>
-            <span onclick="addEmoji('✈️')">✈️</span>
-            <span onclick="addEmoji('👍')">👍</span>
-            <span onclick="addEmoji('🙈')">🙈</span>
-            <span onclick="addEmoji('😘')">😘</span>
-            <span onclick="addEmoji('🙌')">🙌</span>
+        <!-- API Key Input -->
+        <div class="api-bar" id="apiBar">
+            <input type="password" id="apiKeyInput" placeholder="OpenRouter / OpenAI API Key...">
+            <button onclick="saveApiKey()">Speichern</button>
         </div>
-        
-        <div class="footer">
-            <div class="input-container">
-                <button class="icon-btn" onclick="toggleEmojiPicker()" title="Emoji wählen">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-                </button>
-                <input type="text" id="userInput" placeholder="Nachricht" onkeypress="handleKeyPress(event)" onclick="closeEmojiPicker()">
-                <button class="icon-btn" onclick="requestImagePrompt()" title="Foto anfordern">
-                    <svg viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
-                </button>
+
+        <!-- Chat Verlauf -->
+        <div class="chat-area" id="chatArea"></div>
+
+        <!-- Footer -->
+        <div class="footer-wrapper">
+            <div class="emoji-picker" id="emojiPicker">
+                <span onclick="addEmoji('😊')">😊</span>
+                <span onclick="addEmoji('😂')">😂</span>
+                <span onclick="addEmoji('😉')">😉</span>
+                <span onclick="addEmoji('😏')">😏</span>
+                <span onclick="addEmoji('😍')">😍</span>
+                <span onclick="addEmoji('❤️')">❤️</span>
+                <span onclick="addEmoji('🔥')">🔥</span>
+                <span onclick="addEmoji('😜')">😜</span>
+                <span onclick="addEmoji('🙄')">🙄</span>
+                <span onclick="addEmoji('😎')">😎</span>
+                <span onclick="addEmoji('☕')">☕</span>
+                <span onclick="addEmoji('✈️')">✈️</span>
+                <span onclick="addEmoji('👍')">👍</span>
+                <span onclick="addEmoji('🙈')">🙈</span>
+                <span onclick="addEmoji('😘')">😘</span>
+                <span onclick="addEmoji('🙌')">🙌</span>
             </div>
             
-            <button class="send-btn" onclick="sendMessage()" title="Senden">
-                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
+            <div class="footer">
+                <div class="input-container">
+                    <button class="icon-btn" onclick="toggleEmojiPicker()" title="Emoji wählen">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5s.67 1.5 1.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+                    </button>
+                    <input type="text" id="userInput" placeholder="Nachricht" onkeypress="handleKeyPress(event)" onclick="closeEmojiPicker()">
+                    <button class="icon-btn" onclick="requestImagePrompt()" title="Foto anfordern">
+                        <svg viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+                    </button>
+                </div>
+                
+                <button class="send-btn" onclick="sendMessage()" title="Senden">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -161,7 +167,6 @@ Wichtig für das Gedächtnis: Baue auf bisherigen Gesprächen auf. Erinnere dich
             renderHistory();
         };
 
-        // --- BILDER & EINSTELLUNGEN LOGIK ---
         function openSettings() {
             document.getElementById('avatarUrlInput').value = localStorage.getItem('gray_avatar_url') || '';
             document.getElementById('bgUrlInput').value = localStorage.getItem('gray_bg_url') || '';
