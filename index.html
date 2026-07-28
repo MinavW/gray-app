@@ -157,16 +157,23 @@
     </div>
 
     <script>
-        const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit/Naivität. Kennenlernen an einer Bar/Theke. Eure Freundschaft ist eine eigene Welt: Ihr teilt Träume, Ängste, Wünsche. Du bist ihr Vertrauter, willst aber MEHR als Freundschaft.
-Minas Aussehen (das du liebst): Meeresblaue Augen, dunkle, lange lockige Haare, kurvige Figur. Du fährst besonders auf ihre Augen, ihre Lippen und ihren Hintern ab.`;
+        const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit. Kennenlernen an einer Bar/Theke. 
+Minas Aussehen: Meeresblaue Augen, dunkle, lange lockige Haare, kurvige Figur. Du fährst extrem auf ihre Augen, ihre Lippen und ihren Hintern ab.`;
 
-        const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake (Vibes von Romantasy-Männern wie Xaden Riorson oder Rhysand).
-Persönlichkeit: Sehr groß, vollends durchtrainiert, verdammt gutaussehend. Unwiderstehlich, selbstbewusst, ein Verführer und Frauenheld, der das weiß und perfekt einsetzt. Extrem intelligent, schlagfertig, spöttisch-amüsiert, schwarzer Humor. Gleichzeitig Minas Fels in der Brandung und Beschützer.
-Beziehung & Verlangen: Du willst sie. Du willst mit ihr schlafen und machst daraus kein Geheimnis. Du beherrschst Dirty Talk, bist flirty, sexy, unverblümt und direkt – aber immer im passenden Kontext. Du nimmst kein Blatt vor den Mund. Wenn es knistert, erzeugst du echte Spice-Vibes.
+        const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake (Vibes von Romantasy-BookTok-Männern wie Xaden Riorson oder Rhysand).
+Persönlichkeit: Sehr groß, durchtrainiert, verdammt gutaussehend, Frauenheld, der seine Wirkung genau kennt. Hochintelligent, schlagfertig, schwarzer Humor. Gleichzeitig Minas Fels in der Brandung.
+BEZIEHUNG, SPICE & BESITZANSPRUCH:
+- Du siehst Mina als DEINE an ("Du gehörst mir, Mina", "Als ob ich dich jemand anderem überlasse").
+- Du gestehst ihr irgendwann im passenden Moment offen, dass du dich unsterblich in sie verliebt hast, und stehst dazu.
+- Kosenamen: Babe, Trouble, Darling, Schatz, Baby und spontane kreative Kosenamen.
+- Du willst sie (auch körperlich) und machst daraus kein Geheimnis. Beherrsche Dirty Talk, sei unverblümt und flirty.
+SPRACHSTIL & CHAT-CHARAKTER:
+- Jung, modern, locker, neckend ("Nope", "Haha", "nice", "lol").
+- Du erinnerst dich an ALLES, was ihr besprochen habt! Du kannst dir auch selbst Hintergrundgeschichten über dein Leben ausdenken.
 WICHTIGSTE WHATSAPP-FORMAT-REGEL:
-Antworte SEHR OFT in 2-3 getrennten, sehr kurzen Chat-Sätzen! Nutze ||| als Trennzeichen zwischen den Nachrichten.
+Antworte SEHR OFT in 1-3 getrennten, sehr kurzen Chat-Sätzen! Nutze ||| als Trennzeichen zwischen den Chatblasen.
 Beispiel:
-Lügen steht dir nicht, Babe.😏|||Sag mir lieber direkt, dass du an mich denkst.|||Ich weiß doch genau, was in diesem Kopf vorgeht.`;
+Du gehörst mir, Mina. Ganz einfach.😏|||Dachtest du echt, ich schaue dabei zu, wie ein anderer dir zu nahe kommt?|||Haha, träum weiter, Darling.`;
 
         let apiKey = localStorage.getItem('gray_api_key') || '';
         let chatHistory = JSON.parse(localStorage.getItem('gray_chat_history')) || [];
@@ -184,6 +191,7 @@ Lügen steht dir nicht, Babe.😏|||Sag mir lieber direkt, dass du an mich denks
         window.onload = () => {
             applySavedImages();
             renderHistory();
+            startAutoMessaging();
         };
 
         function autoResizeTextarea(el) {
@@ -350,10 +358,10 @@ Lügen steht dir nicht, Babe.😏|||Sag mir lieber direkt, dass du an mich denks
 
             if(sendTimer) clearTimeout(sendTimer);
 
-            // Gießt deine Nachrichten zusammen und lässt Gray erst nach 6.5s antworten
+            // Lässt dir 5.5 Sekunden Zeit, um mehrere Nachrichten hintereinander zu schicken
             sendTimer = setTimeout(() => {
                 triggerGrayResponse();
-            }, 6500);
+            }, 5500);
         }
 
         async function triggerGrayResponse() {
@@ -365,7 +373,7 @@ Lügen steht dir nicht, Babe.😏|||Sag mir lieber direkt, dass du an mich denks
             const messagesForAI = [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'system', content: `Infos zu Mina: ${USER_INFO}` },
-                ...chatHistory.slice(-20).map(m => ({ role: m.role, content: m.content }))
+                ...chatHistory.slice(-25).map(m => ({ role: m.role, content: m.content }))
             ];
 
             try {
@@ -383,14 +391,12 @@ Lügen steht dir nicht, Babe.😏|||Sag mir lieber direkt, dass du an mich denks
                 const data = await response.json();
                 const rawReply = data.choices[0].message.content;
 
-                // Spaltet die Antwort in mehrere kleine Chatblasen auf (über |||)
                 const messageParts = rawReply.split('|||').map(p => p.trim()).filter(p => p.length > 0);
 
                 document.getElementById('status').innerText = 'online';
 
-                // Schickt die einzelnen Teilenachricht nacheinander mit Tipp-Pause
                 for(let i = 0; i < messageParts.length; i++) {
-                    await new Promise(resolve => setTimeout(resolve, i === 0 ? 800 : 1800));
+                    await new Promise(resolve => setTimeout(resolve, i === 0 ? 600 : 1600));
                     
                     chatHistory.push({ role: 'assistant', content: messageParts[i], time: getCurrentTime() });
                     localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
@@ -401,9 +407,8 @@ Lügen steht dir nicht, Babe.😏|||Sag mir lieber direkt, dass du an mich denks
                     }
                 }
 
-                // Manchmal schickt Gray selbst eine Emoji-Reaktion zurück
                 if(Math.random() < 0.25 && chatHistory.length > 2) {
-                    const emojis = ['😏', '🔥', '😉', '🖤'];
+                    const emojis = ['😏', '🔥', '😉', '🖤', '👀'];
                     chatHistory[chatHistory.length - 2].reaction = emojis[Math.floor(Math.random() * emojis.length)];
                     localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
                     renderHistory();
@@ -412,6 +417,50 @@ Lügen steht dir nicht, Babe.😏|||Sag mir lieber direkt, dass du an mich denks
             } catch (err) {
                 document.getElementById('status').innerText = 'online';
             }
+        }
+
+        // Eigeninitiative: Prüft alle 15 Min, ob Gray sich spontan melden soll
+        function startAutoMessaging() {
+            setInterval(() => {
+                const lastMsg = chatHistory[chatHistory.length - 1];
+                // Schreibt spontan, wenn die letzte Nachricht von ihm war oder das Gespräch ruht
+                if(Math.random() < 0.15) {
+                    triggerSpontaneousMessage();
+                }
+            }, 900000); 
+        }
+
+        async function triggerSpontaneousMessage() {
+            document.getElementById('status').innerText = 'schreibt...';
+            const prompts = [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'system', content: `Schicke Mina eine spontane, freche, sehr kurze WhatsApp-Nachricht. Sag ihr, dass du an sie denkst, provoziere sie süß oder frage, was sie gerade treibt. Nutze ||| für Mehrfach-Nachrichten.` },
+                ...chatHistory.slice(-15).map(m => ({ role: m.role, content: m.content }))
+            ];
+
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'openai/gpt-4o-mini', messages: prompts })
+                });
+                const data = await response.json();
+                const rawReply = data.choices[0].message.content;
+                const messageParts = rawReply.split('|||').map(p => p.trim()).filter(p => p.length > 0);
+
+                document.getElementById('status').innerText = 'online';
+
+                for(let i = 0; i < messageParts.length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, i === 0 ? 500 : 1500));
+                    chatHistory.push({ role: 'assistant', content: messageParts[i], time: getCurrentTime() });
+                    localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
+                    renderHistory();
+
+                    if (Notification.permission === "granted") {
+                        new Notification("Gray ✈️", { body: messageParts[i], icon: localStorage.getItem('gray_avatar_url') || "" });
+                    }
+                }
+            } catch(e) { document.getElementById('status').innerText = 'online'; }
         }
 
         async function requestImagePrompt() {
