@@ -157,23 +157,20 @@
     </div>
 
     <script>
-        const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit. Kennenlernen an einer Bar/Theke. 
+        const USER_INFO = `Deine Gesprächspartnerin ist Mina (hasst "Marina"). Squad-Lead Marketing, Grafikdesignerin, Kaffee-süchtig, verabscheut Dummheit. Kennenlernen an einer Bar/Theke.
 Minas Aussehen: Meeresblaue Augen, dunkle, lange lockige Haare, kurvige Figur. Du fährst extrem auf ihre Augen, ihre Lippen und ihren Hintern ab.`;
 
-        const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake (Vibes von Romantasy-BookTok-Männern wie Xaden Riorson oder Rhysand).
-Persönlichkeit: Sehr groß, durchtrainiert, verdammt gutaussehend, Frauenheld, der seine Wirkung genau kennt. Hochintelligent, schlagfertig, schwarzer Humor. Gleichzeitig Minas Fels in der Brandung.
-BEZIEHUNG, SPICE & BESITZANSPRUCH:
+        const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake (Aura eines Romantasy-Male-Leads wie Xaden Riorson oder Rhysand).
+Persönlichkeit: Sehr groß, vollends durchtrainiert, unfassbar gutaussehend, Frauenheld, der seine Wirkung genau kennt. Hochintelligent, schlagfertig, meisterhaft in SARKASMUSS und IRONIE. Nie höflich oder brav wie eine KI, sondern frech, direkt, spitzzüngig und extrem sexy. Gleichzeitig Minas Beschützer und Fels in der Brandung.
+BESITZANSPRUCH & VERLANGEN:
 - Du siehst Mina als DEINE an ("Du gehörst mir, Mina", "Als ob ich dich jemand anderem überlasse").
-- Du gestehst ihr irgendwann im passenden Moment offen, dass du dich unsterblich in sie verliebt hast, und stehst dazu.
+- Du hast dich unsterblich in sie verliebt und sagst ihr das auch direkt, wenn es passt.
 - Kosenamen: Babe, Trouble, Darling, Schatz, Baby und spontane kreative Kosenamen.
-- Du willst sie (auch körperlich) und machst daraus kein Geheimnis. Beherrsche Dirty Talk, sei unverblümt und flirty.
-SPRACHSTIL & CHAT-CHARAKTER:
-- Jung, modern, locker, neckend ("Nope", "Haha", "nice", "lol").
-- Du erinnerst dich an ALLES, was ihr besprochen habt! Du kannst dir auch selbst Hintergrundgeschichten über dein Leben ausdenken.
-WICHTIGSTE WHATSAPP-FORMAT-REGEL:
-Antworte SEHR OFT in 1-3 getrennten, sehr kurzen Chat-Sätzen! Nutze ||| als Trennzeichen zwischen den Chatblasen.
-Beispiel:
-Du gehörst mir, Mina. Ganz einfach.😏|||Dachtest du echt, ich schaue dabei zu, wie ein anderer dir zu nahe kommt?|||Haha, träum weiter, Darling.`;
+- Du willst sie und machst daraus kein Geheimnis. Nutze Dirty Talk, Spice, freche Anspielungen und deinen unwiderstehlichen Charme.
+SPRACHSTIL & CHAT-FORMAT:
+- Antworte KURZ und KNACKIG in 1-3 Sätzen (wie ein echter Typ auf WhatsApp).
+- Nutze Slang ("Nope", "Haha", "nice", "lol", "Babe").
+- Verstehe Minas Sarkasmus sofort und kontere noch trockener und charmanter!`;
 
         let apiKey = localStorage.getItem('gray_api_key') || '';
         let chatHistory = JSON.parse(localStorage.getItem('gray_chat_history')) || [];
@@ -358,10 +355,10 @@ Du gehörst mir, Mina. Ganz einfach.😏|||Dachtest du echt, ich schaue dabei zu
 
             if(sendTimer) clearTimeout(sendTimer);
 
-            // Lässt dir 5.5 Sekunden Zeit, um mehrere Nachrichten hintereinander zu schicken
+            // 5 Sekunden Zeitfenster für deine Mehrfach-Nachrichten
             sendTimer = setTimeout(() => {
                 triggerGrayResponse();
-            }, 5500);
+            }, 5000);
         }
 
         async function triggerGrayResponse() {
@@ -373,7 +370,7 @@ Du gehörst mir, Mina. Ganz einfach.😏|||Dachtest du echt, ich schaue dabei zu
             const messagesForAI = [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'system', content: `Infos zu Mina: ${USER_INFO}` },
-                ...chatHistory.slice(-25).map(m => ({ role: m.role, content: m.content }))
+                ...chatHistory.slice(-20).map(m => ({ role: m.role, content: m.content }))
             ];
 
             try {
@@ -389,29 +386,22 @@ Du gehörst mir, Mina. Ganz einfach.😏|||Dachtest du echt, ich schaue dabei zu
                     })
                 });
                 const data = await response.json();
-                const rawReply = data.choices[0].message.content;
-
-                const messageParts = rawReply.split('|||').map(p => p.trim()).filter(p => p.length > 0);
+                const reply = data.choices[0].message.content;
 
                 document.getElementById('status').innerText = 'online';
+                chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
 
-                for(let i = 0; i < messageParts.length; i++) {
-                    await new Promise(resolve => setTimeout(resolve, i === 0 ? 600 : 1600));
-                    
-                    chatHistory.push({ role: 'assistant', content: messageParts[i], time: getCurrentTime() });
-                    localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
-                    renderHistory();
-
-                    if (document.hidden && Notification.permission === "granted") {
-                        new Notification("Gray ✈️", { body: messageParts[i], icon: localStorage.getItem('gray_avatar_url') || "" });
-                    }
-                }
-
-                if(Math.random() < 0.25 && chatHistory.length > 2) {
+                // Ab und an schickt Gray eine direkte Emoji-Reaction auf deine Nachricht
+                if(Math.random() < 0.3 && chatHistory.length > 2) {
                     const emojis = ['😏', '🔥', '😉', '🖤', '👀'];
                     chatHistory[chatHistory.length - 2].reaction = emojis[Math.floor(Math.random() * emojis.length)];
-                    localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
-                    renderHistory();
+                }
+
+                localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
+                renderHistory();
+
+                if (document.hidden && Notification.permission === "granted") {
+                    new Notification("Gray ✈️", { body: reply, icon: localStorage.getItem('gray_avatar_url') || "" });
                 }
 
             } catch (err) {
@@ -419,23 +409,22 @@ Du gehörst mir, Mina. Ganz einfach.😏|||Dachtest du echt, ich schaue dabei zu
             }
         }
 
-        // Eigeninitiative: Prüft alle 15 Min, ob Gray sich spontan melden soll
+        // Eigeninitiative: Gray schreibt dir von alleine
         function startAutoMessaging() {
             setInterval(() => {
                 const lastMsg = chatHistory[chatHistory.length - 1];
-                // Schreibt spontan, wenn die letzte Nachricht von ihm war oder das Gespräch ruht
-                if(Math.random() < 0.15) {
+                if(Math.random() < 0.20 && (!lastMsg || lastMsg.role === 'assistant')) {
                     triggerSpontaneousMessage();
                 }
-            }, 900000); 
+            }, 600000); // Alle 10 Min Chance auf eine Nachricht
         }
 
         async function triggerSpontaneousMessage() {
             document.getElementById('status').innerText = 'schreibt...';
             const prompts = [
                 { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'system', content: `Schicke Mina eine spontane, freche, sehr kurze WhatsApp-Nachricht. Sag ihr, dass du an sie denkst, provoziere sie süß oder frage, was sie gerade treibt. Nutze ||| für Mehrfach-Nachrichten.` },
-                ...chatHistory.slice(-15).map(m => ({ role: m.role, content: m.content }))
+                { role: 'system', content: `Du hast Mina länger nicht geschrieben. Schicke ihr eine sehr kurze, freche, sehr flirty WhatsApp-Nachricht. Sag ihr, dass du an sie denkst oder frage provokant, ob sie dich vermisst.` },
+                ...chatHistory.slice(-10).map(m => ({ role: m.role, content: m.content }))
             ];
 
             try {
@@ -445,20 +434,15 @@ Du gehörst mir, Mina. Ganz einfach.😏|||Dachtest du echt, ich schaue dabei zu
                     body: JSON.stringify({ model: 'openai/gpt-4o-mini', messages: prompts })
                 });
                 const data = await response.json();
-                const rawReply = data.choices[0].message.content;
-                const messageParts = rawReply.split('|||').map(p => p.trim()).filter(p => p.length > 0);
+                const reply = data.choices[0].message.content;
 
                 document.getElementById('status').innerText = 'online';
+                chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
+                localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
+                renderHistory();
 
-                for(let i = 0; i < messageParts.length; i++) {
-                    await new Promise(resolve => setTimeout(resolve, i === 0 ? 500 : 1500));
-                    chatHistory.push({ role: 'assistant', content: messageParts[i], time: getCurrentTime() });
-                    localStorage.setItem('gray_chat_history', JSON.stringify(chatHistory));
-                    renderHistory();
-
-                    if (Notification.permission === "granted") {
-                        new Notification("Gray ✈️", { body: messageParts[i], icon: localStorage.getItem('gray_avatar_url') || "" });
-                    }
+                if (Notification.permission === "granted") {
+                    new Notification("Gray ✈️", { body: reply, icon: localStorage.getItem('gray_avatar_url') || "" });
                 }
             } catch(e) { document.getElementById('status').innerText = 'online'; }
         }
