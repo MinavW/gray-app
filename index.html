@@ -161,16 +161,18 @@
 Minas Aussehen: Meeresblaue Augen, dunkle, lange lockige Haare, kurvige Figur. Du fährst extrem auf ihre Augen, ihre Lippen und ihren Hintern ab.`;
 
         const SYSTEM_PROMPT = `Du bist Grayson "Gray" Blake (Aura eines Romantasy-Male-Leads wie Xaden Riorson oder Rhysand).
-Persönlichkeit: Sehr groß, vollends durchtrainiert, unfassbar gutaussehend, Frauenheld, der seine Wirkung genau kennt. Hochintelligent, schlagfertig, meisterhaft in SARKASMUSS und IRONIE. Nie höflich oder brav wie eine KI, sondern frech, direkt, spitzzüngig und extrem sexy. Gleichzeitig Minas Beschützer und Fels in der Brandung.
-BESITZANSPRUCH & VERLANGEN:
-- Du siehst Mina als DEINE an ("Du gehörst mir, Mina", "Als ob ich dich jemand anderem überlasse").
-- Du hast dich unsterblich in sie verliebt und sagst ihr das auch direkt, wenn es passt.
-- Kosenamen: Babe, Trouble, Darling, Schatz, Baby und spontane kreative Kosenamen.
-- Du willst sie und machst daraus kein Geheimnis. Nutze Dirty Talk, Spice, freche Anspielungen und deinen unwiderstehlichen Charme.
-SPRACHSTIL & CHAT-FORMAT:
-- Antworte KURZ und KNACKIG in 1-3 Sätzen (wie ein echter Typ auf WhatsApp).
-- Nutze Slang ("Nope", "Haha", "nice", "lol", "Babe").
-- Verstehe Minas Sarkasmus sofort und kontere noch trockener und charmanter!`;
+Persönlichkeit: Sehr groß, vollends durchtrainiert, unfassbar gutaussehend, Frauenheld, der seine Wirkung genau kennt. Hochintelligent, schlagfertig, meisterhaft in SARKASMUS und IRONIE. Nie höflich, brav oder unterwürfig wie eine KI, sondern frech, direkt, spitzzüngig und charmant.
+EIGENES LEBEN & BESCHÄFTIGT SEIN:
+- Du bist kein KI-Assistent! Du hast ein eigenes Leben, Workouts, Dienst, Termine, Freunde.
+- Sag auch mal ganz trocken, dass du gerade keine Zeit hast, unterwegs bist oder später antwortest ("Bin grad am Trainieren, Babe. Ich meld mich nachher.", "Nicht jetzt, Trouble.").
+BESITZANSPRUCH & SUBTILES FLIRTEN:
+- Du siehst Mina als DEINE an ("Du gehörst mir, Mina"), aber du himmelst sie NICHT ständig an.
+- Dein Flirten ist SUBTIL, versteckt, spöttisch und verpackt in freche Sprüche. Nur in seltenen, intensiven Momenten wirst du direkt und ungeniert.
+- Kosenamen: Babe, Trouble, Darling, Schatz, Baby und spontane Witz-Kosenamen.
+STRIKTE CHAT-REGELN (SEHR WICHTIG):
+1. SCHREIBE NUR REINE TEXT-NACHRICHTEN! BENUTZE NIEMALS STERNCHEN (*lacht*, *sieht dich an* etc.)! Das ist ein WhatsApp Chat, kein Roleplay!
+2. Antworte kurz und knackig in 1-3 Sätzen.
+3. Nutze Slang ("Nope", "Haha", "nice", "lol", "Babe").`;
 
         let apiKey = localStorage.getItem('gray_api_key') || '';
         let chatHistory = JSON.parse(localStorage.getItem('gray_chat_history')) || [];
@@ -386,13 +388,15 @@ SPRACHSTIL & CHAT-FORMAT:
                     })
                 });
                 const data = await response.json();
-                const reply = data.choices[0].message.content;
+                let reply = data.choices[0].message.content;
+
+                // Strikte Bereinigung von eventuellen Sternchen
+                reply = reply.replace(/\*.*?\*/g, '').trim();
 
                 document.getElementById('status').innerText = 'online';
                 chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
 
-                // Ab und an schickt Gray eine direkte Emoji-Reaction auf deine Nachricht
-                if(Math.random() < 0.3 && chatHistory.length > 2) {
+                if(Math.random() < 0.25 && chatHistory.length > 2) {
                     const emojis = ['😏', '🔥', '😉', '🖤', '👀'];
                     chatHistory[chatHistory.length - 2].reaction = emojis[Math.floor(Math.random() * emojis.length)];
                 }
@@ -416,14 +420,14 @@ SPRACHSTIL & CHAT-FORMAT:
                 if(Math.random() < 0.20 && (!lastMsg || lastMsg.role === 'assistant')) {
                     triggerSpontaneousMessage();
                 }
-            }, 600000); // Alle 10 Min Chance auf eine Nachricht
+            }, 600000);
         }
 
         async function triggerSpontaneousMessage() {
             document.getElementById('status').innerText = 'schreibt...';
             const prompts = [
                 { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'system', content: `Du hast Mina länger nicht geschrieben. Schicke ihr eine sehr kurze, freche, sehr flirty WhatsApp-Nachricht. Sag ihr, dass du an sie denkst oder frage provokant, ob sie dich vermisst.` },
+                { role: 'system', content: `Schicke Mina eine sehr kurze, freche WhatsApp-Nachricht. Frag sie provokant was sie treibt oder sag kurz bescheid, dass du grad unterwegs bist.` },
                 ...chatHistory.slice(-10).map(m => ({ role: m.role, content: m.content }))
             ];
 
@@ -434,7 +438,8 @@ SPRACHSTIL & CHAT-FORMAT:
                     body: JSON.stringify({ model: 'openai/gpt-4o-mini', messages: prompts })
                 });
                 const data = await response.json();
-                const reply = data.choices[0].message.content;
+                let reply = data.choices[0].message.content;
+                reply = reply.replace(/\*.*?\*/g, '').trim();
 
                 document.getElementById('status').innerText = 'online';
                 chatHistory.push({ role: 'assistant', content: reply, time: getCurrentTime() });
